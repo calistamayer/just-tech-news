@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { User } = require('../../models');
+const { User, Post, Vote } = require('../../models');
 
 // GET /api/users
 router.get('/', (req, res) => {
@@ -17,21 +17,35 @@ router.get('/', (req, res) => {
 // GET /api/users/1
 router.get('/:id', (req, res) => {
     User.findOne({
-        attributes: { exclude: ['password'] },
+        attributes: {
+            exclude: ['password']
+        },
+        include: [
+            {
+                model: Post,
+                attributes: ['id', 'title', 'post_url', 'created_at']
+            },
+            {
+                model: Post,
+                attributes: ['title'],
+                through: Vote,
+                as: 'voted_posts'
+            }
+        ],
         where: {
             id: req.params.id
         }
     }).then(dbUserData => {
         if (!dbUserData) {
-            res.status(404).json({message: 'No user found with this id' });
+            res.status(404).json({ message: 'No user found with this id' });
             return;
         }
         res.json(dbUserData);
     })
-    .catch(err => {
-        console.log(err);
-        res.status(500).json(err);
-    });
+        .catch(err => {
+            console.log(err);
+            res.status(500).json(err);
+        });
 });
 
 // POST /api/users
@@ -51,7 +65,7 @@ router.post('/', (req, res) => {
 
 // POST /api/users/login
 router.post('/login', (req, res) => {
- // expects {email: 'c@li.com', password: '56}
+    // expects {email: 'c@li.com', password: '56}
     User.findOne({
         where: {
             email: req.body.email
@@ -93,10 +107,10 @@ router.put('/:id', (req, res) => {
         }
         res.json(dbUserData);
     })
-    .catch(err => {
-        console.log(err);
-        res.status(500).json(err);
-    });
+        .catch(err => {
+            console.log(err);
+            res.status(500).json(err);
+        });
 });
 
 // DELETE /api/users/1
@@ -112,10 +126,10 @@ router.delete('/:id', (req, res) => {
         }
         res.json(dbUserData);
     })
-    .catch(err => {
-        console.log(err);
-        res.status(500).json(err);
-    });
+        .catch(err => {
+            console.log(err);
+            res.status(500).json(err);
+        });
 });
 
 module.exports = router;
